@@ -3,11 +3,12 @@
 #include <omp.h>
 #include <math.h>
 
+static int a[ ] = { [0 ...  10000000] = 1};
+
 void sieve() {
   #pragma omp parallel num_threads(4)
   {
-    int n =  10000000;
-    int a[ ] = { [0 ...  10000000] = 1}; 
+    int n = 10000000;
     int root = sqrt(n);
     #pragma omp for
       for(int i = 2; i < root; i++) {
