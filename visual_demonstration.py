@@ -34,7 +34,6 @@ def getPrime(array, n):
       colorNotPrime(n, i, array)
       
       
-
 def colorNotPrime(n, i, array):
   for j in range(n):
     square = i * i
@@ -67,7 +66,7 @@ def create_grid():
   space = info["marginItems"]
   margin_top = info["marginTop"]
   margin_left = info["marginLeft"]
-  side = math.floor((container_width - space) / columns)
+  side = math.floor((container_width - (space * columns)) / columns)
 
   i = j = 1
   for index in range(1, n + 1):
@@ -102,3 +101,4 @@ while running:
 
 
 print(sieve())
+sys.exit()
