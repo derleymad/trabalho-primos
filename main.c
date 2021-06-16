@@ -5,7 +5,28 @@
 
 static int a[ ] = { [0 ...  10000000] = 1};
 
-void sieve() {
+void sieveSerial() {
+  int n = 10000000;
+  int root = sqrt(n);
+  for(int i = 2; i < root; i++) {
+    if(a[i]) {
+      a[i] = 1;
+      for(int j = 0; j < n; j++) {
+        int square = i * i;
+        int index = square + (i * j);
+        if(index < n) a[index] = 0;
+        else break;
+      }
+    }
+  }
+  for(int i = 2; i < n; i++) {
+    if(a[i]){
+      printf("%d\n", i);
+    }
+  }
+}
+
+void sieveThreads() {
   #pragma omp parallel num_threads(4)
   {
     int n = 10000000;
@@ -17,11 +38,8 @@ void sieve() {
           for(int j = 0; j < n; j++) {
             int square = i * i;
             int index = square + (i * j);
-            if(index < n) {
-              a[index] = 0;
-            } else {
-              break;
-            }
+            if(index < n) a[index] = 0;
+            else break;
           }
         }
       }
@@ -34,5 +52,5 @@ void sieve() {
 }
 
 void main() {
-  sieve();
+  sieveThreads();
 }
