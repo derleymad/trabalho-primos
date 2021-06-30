@@ -74,6 +74,6 @@ void main() {
 
   printf("Time Serial: %f\n", timeSerial);
   printf("Time Parallel: %f\n", timeThreads);
-  printf("Speedup: %f\n", timeSerial);
-  printf("Efficiency with 4 theads: %f\n", timeThreads);
+  printf("Speedup: %f\n", speedup);
+  printf("Efficiency with 4 theads: %f\n", efficiency);
 }
