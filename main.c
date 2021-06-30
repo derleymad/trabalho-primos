@@ -95,7 +95,6 @@ void sieveThreads(Data *data) {
 }
 
 void main() {
-
   Data serial, parallel;
   serial.length = 0;
   serial.numThreads = 1;
@@ -103,13 +102,11 @@ void main() {
   parallel.numThreads = 1;
   sieveSerial(&serial);
   sieveThreads(&parallel);
-  printf("time serial: %lf\ntime parallel: %lf", serial.time, parallel.time);
-  printf("\nThread's number:\n\tSerial-%d\n\tParallel-%d\n", serial.numThreads, parallel.numThreads);
-  // double speedup = timeSerial/timeThreads;
-  // double efficiency = timeSerial/(4*timeThreads);
+  double speedup = serial.time/parallel.time;
+  double efficiency = serial.time/(parallel.numThreads * parallel.time);
 
-  // printf("Time Serial: %f\n", timeSerial);
-  // printf("Time Parallel: %f\n", timeThreads);
-  // printf("Speedup: %f\n", speedup);
-  // printf("Efficiency with 4 theads: %f\n", efficiency);
+  printf("Serial Time: %lf\nParallel Time: %lf\n", serial.time, parallel.time);
+  printf("Thread's number:\n  Serial-%d\n  Parallel-%d\n", serial.numThreads, parallel.numThreads);
+  printf("SpeedUp: %lf\n", speedup);
+  printf("Efficiency: %lf\n", efficiency);
 }
