@@ -3,6 +3,8 @@
 #include <omp.h>
 #include <math.h>
 
+#define MAX 10000000
+
 struct data
 {
   int *primes;
@@ -12,10 +14,6 @@ struct data
 };
 
 typedef struct data Data;
-
-#define MAX 10000000
-
-static int a[ ] = { [0 ... 10000000] = 1};
 
 void setData(Data *data, int *a) {
   data->primes = (int*)malloc(sizeof(int));
