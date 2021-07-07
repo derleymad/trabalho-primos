@@ -3,7 +3,7 @@
 #include <omp.h>
 #include <math.h>
 
-#define MAX 10000000
+#define MAX 350000000
 
 struct data
 {
@@ -18,7 +18,7 @@ typedef struct data Data;
 void setData(Data *data, int *a) {
   data->primes = (int*)malloc(sizeof(int));
   for(int i = 2; i < MAX; i++) {
-    if(a[i]) {
+    if(!a[i]) {
       data->primes[data->length] = i;
       data->length++;
       int newSize = data->length + 1;
@@ -31,19 +31,15 @@ void sieveSerial(Data *data) {
   double start = omp_get_wtime();
   int root = sqrt(MAX);
   int *a;
-  a = (int*)malloc(MAX*sizeof(int));
-
-  for(int i = 0; i < MAX; i++) {
-    a[i] = 1;
-  }
+  a = (int*)calloc(MAX, sizeof(int));
 
   for(int i = 2; i < root; i++) {
-    if(a[i]) {
-      a[i] = 1;
+    if(!a[i]) {
+      a[i] = 0;
       for(int j = 0; j < MAX; j++) {
         int square = i * i;
         int index = square + (i * j);
-        if(index < MAX) a[index] = 0;
+        if(index < MAX) a[index]++;
         else break;
       }
     }
@@ -54,69 +50,26 @@ void sieveSerial(Data *data) {
   data->time = end-start;
 }
 
-void sieve1(Data *data) {
+void sieveThreads(Data *data, int numThreads) {
   double start = omp_get_wtime();
   int *a;
   int i;
-  a = (int*)malloc(MAX*sizeof(int));
+  a = (int*)calloc(MAX, sizeof(int));
 
-  int numThreads;
-  #pragma omp parallel shared(a, i) num_threads(1)
+  
+  #pragma omp parallel shared(a, i) num_threads(numThreads)
   {
-    data->numThreads = omp_get_num_threads();
     int root = sqrt(MAX);
-    #pragma omp for
-      for(i = 0; i < MAX; i++) {
-        a[i] = 1;
-      }
-
-    #pragma omp parallel shared(a, i) num_threads(1)
-      for(i = 2; i < root; i++) {
-        if(a[i]) {
-          a[i] = 1;
-          int square = i * i;
-          #pragma omp for
-            for(int j = 0; j < MAX; j++) {
-              int index = square + (i * j);
-              if(index < MAX) a[index] = 0;
-              else j = MAX;
-            }
-        }
-      }
-  }
-  setData(data, a);
-  free(a);
-  double end = omp_get_wtime();
-  data->time = end-start;
-}
-
-void sieveThreads(Data *data) {
-  double start = omp_get_wtime();
-  int *a;
-  int i;
-  a = (int*)malloc(MAX*sizeof(int));
-
-  int numThreads;
-  #pragma omp parallel shared(a, i)
-  {
     data->numThreads = omp_get_num_threads();
-    int root = sqrt(MAX);
     #pragma omp for
-      for(i = 0; i < MAX; i++) {
-        a[i] = 1;
-      }
-
-    #pragma omp parallel shared(a, i)
       for(i = 2; i < root; i++) {
-        if(a[i]) {
-          a[i] = 1;
-          int square = i * i;
-          #pragma omp for
-            for(int j = 0; j < MAX; j++) {
-              int index = square + (i * j);
-              if(index < MAX) a[index] = 0;
-              else j = MAX;
-            }
+        if(!a[i]){
+          for(int j = 0; j < MAX; j++) {
+            int square = i * i;
+            int index = square + (i * j);
+            if(index < MAX) a[index] = 1;
+            else break;
+          }
         }
       }
   }
@@ -132,8 +85,8 @@ void main() {
   serial.numThreads = 1;
   parallel.length = 0;
   parallel.numThreads = 1;
-  sieve1(&serial);
-  sieveThreads(&parallel);
+  sieveThreads(&serial, 1);
+  sieveThreads(&parallel, 2);
   double speedup = serial.time/parallel.time;
   double efficiency = serial.time/(parallel.numThreads * parallel.time);
 
