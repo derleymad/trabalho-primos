@@ -57,36 +57,32 @@ void sieveSerial(Data *data) {
 void sieveThreads(Data *data) {
   double start = omp_get_wtime();
   int *a;
+  int i;
   a = (int*)malloc(MAX*sizeof(int));
 
   int numThreads;
-  #pragma omp parallel shared(a)
+  #pragma omp parallel shared(a, i)
   {
     data->numThreads = omp_get_num_threads();
     int root = sqrt(MAX);
     #pragma omp for
-      for(int i = 0; i < MAX; i++) {
+      for(i = 0; i < MAX; i++) {
         a[i] = 1;
       }
 
-    #pragma omp for
-      for(int i = 2; i < root; i++) {
+    #pragma omp parallel
+      for(i = 2; i < root; i++) {
         if(a[i]) {
           a[i] = 1;
           int square = i * i;
-          for(int j = 0; j < MAX; j++) {
-            int index = square + (i * j);
-            if(index < MAX) a[index] = 0;
-            else break;
-          }
+          #pragma omp for
+            for(int j = 0; j < MAX; j++) {
+              int index = square + (i * j);
+              if(index < MAX) a[index] = 0;
+              else j = MAX;
+            }
         }
       }
-
-    /*for(int i = 2; i < n; i++) {
-      if(a[i]){
-        printf("%d - %d\n", omp_get_thread_num(), i);
-      }
-    }*/
   }
   setData(data, a);
   free(a);
@@ -109,4 +105,7 @@ void main() {
   printf("Thread's number:\n  Serial-%d\n  Parallel-%d\n", serial.numThreads, parallel.numThreads);
   printf("SpeedUp: %lf\n", speedup);
   printf("Efficiency: %lf\n", efficiency);
+
+  free(serial.primes);
+  free(parallel.primes);
 }
