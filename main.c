@@ -17,12 +17,12 @@ typedef struct data Data;
 
 void setData(Data *data, int *a) {
   data->primes = (int*)malloc(sizeof(int));
+  int size = 0;
   for(int i = 2; i < MAX; i++) {
     if(a[i]) {
-      data->primes[data->length] = i;
-      data->length++;
-      int newSize = data->length + 1;
-      data->primes = (int*)realloc(data->primes, newSize * sizeof(Data));
+      data->primes[size] = i;
+      size++;
+      data->primes = (int*)realloc(data->primes, size * sizeof(Data));
     }
   }
 }
@@ -30,7 +30,7 @@ void setData(Data *data, int *a) {
 void sieveSerial(Data *data) {
   double start = omp_get_wtime();
   int root = sqrt(MAX);
-  int *a;
+  int *a, length = 0;
   a = (int*)calloc(MAX, sizeof(int));
 
   for(int i = 2; i < MAX; i++) {
@@ -45,6 +45,11 @@ void sieveSerial(Data *data) {
     }
   }
 
+  for(int i = 1; i < MAX; i++) {
+    length += a[i];
+  }
+
+  data->length = length;
   setData(data, a);
   free(a);
   double end = omp_get_wtime();
@@ -53,7 +58,7 @@ void sieveSerial(Data *data) {
 
 void sieveThreads(Data *data, int numThreads) {
   double start = omp_get_wtime();
-  int *a;
+  int *a, length = 0;
   a = (int*)calloc(MAX, sizeof(int));
   int root = sqrt(MAX);
   data->numThreads = numThreads;
@@ -75,6 +80,12 @@ void sieveThreads(Data *data, int numThreads) {
     }
   } 
 
+  #pragma omp parallel for num_threads(numThreads) reduction (+: length)
+    for(int i = 0; i < MAX; i++) {
+      length += a[i];
+    }
+
+  data->length = length;
   setData(data, a);
   free(a);
   double end = omp_get_wtime();
@@ -82,23 +93,26 @@ void sieveThreads(Data *data, int numThreads) {
 }
 
 void main() {
-  Data serial, parallel;
-  serial.length = 0;
-  serial.numThreads = 1;
-  parallel.length = 0;
-  parallel.numThreads = 1;
-  sieveSerial(&serial);
-  sieveThreads(&parallel, 2);
-  double speedup = serial.time/parallel.time;
-  double efficiency = serial.time/(parallel.numThreads * parallel.time);
+  for(int i = 0; i < 10; i++) {
+    Data serial, parallel;
+    serial.length = 0;
+    serial.numThreads = 1;
+    parallel.length = 0;
+    parallel.numThreads = 1;
+    sieveSerial(&serial);
+    sieveThreads(&parallel, 2);
+    double speedup = serial.time/parallel.time;
+    double efficiency = serial.time/(parallel.numThreads * parallel.time);
 
-  printf("Serial Length: %d\nParallel Length: %d\n", serial.length, parallel.length);
+    printf("==================================================================\n");
+    printf("Serial Length: %d\nParallel Length: %d\n", serial.length, parallel.length);
 
-  printf("Serial Time: %lf\nParallel Time: %lf\n", serial.time, parallel.time);
-  printf("Thread's number:\n  Serial-%d\n  Parallel-%d\n", serial.numThreads, parallel.numThreads);
-  printf("SpeedUp: %lf\n", speedup);
-  printf("Efficiency: %lf\n", efficiency);
-
-  free(serial.primes);
-  free(parallel.primes);
+    printf("Serial Time: %lf\nParallel Time: %lf\n", serial.time, parallel.time);
+    printf("Thread's number:\n  Serial-%d\n  Parallel-%d\n", serial.numThreads, parallel.numThreads);
+    printf("SpeedUp: %lf\n", speedup);
+    printf("Efficiency: %lf\n", efficiency);
+    printf("==================================================================\n");
+    free(serial.primes);
+    free(parallel.primes);
+  }
 }
