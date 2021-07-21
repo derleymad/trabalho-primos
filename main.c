@@ -64,7 +64,7 @@ void sieveThreads(Data *data, int numThreads) {
   data->numThreads = numThreads;
 
   #pragma omp parallel for num_threads(numThreads)
-    for(int k = 0; k < MAX; k++) {
+    for(int k = 2; k < MAX; k++) {
         a[k] = 1;
     }
 
