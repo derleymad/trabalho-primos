@@ -7,7 +7,7 @@
 
 struct data
 {
-  int *primes;
+  int *isPrime;
   int length;
   int numThreads;
   double time;
@@ -15,14 +15,10 @@ struct data
 
 typedef struct data Data;
 
-void setData(Data *data, int *a) {
-  data->primes = (int*)malloc(sizeof(int));
-  int size = 0;
+void showPrimes(Data *data) {
   for(int i = 2; i < MAX; i++) {
-    if(a[i]) {
-      data->primes[size] = i;
-      size++;
-      data->primes = (int*)realloc(data->primes, size * sizeof(Data));
+    if(data->isPrime[i]) {
+      printf("%d\n", i);
     }
   }
 }
@@ -50,8 +46,8 @@ void sieveSerial(Data *data) {
   }
 
   data->length = length;
-  setData(data, a);
-  free(a);
+  data->isPrime = a;
+  // free(a);
   double end = omp_get_wtime();
   data->time = end-start;
 }
@@ -80,20 +76,19 @@ void sieveThreads(Data *data, int numThreads) {
     }
   } 
 
-  #pragma omp parallel for num_threads(numThreads) reduction (+: length)
+  #pragma omp parallel for num_threads(numThreads) reduction(+: length)
     for(int i = 0; i < MAX; i++) {
       length += a[i];
     }
-
+  
   data->length = length;
-  setData(data, a);
-  free(a);
+  data->isPrime = a;
   double end = omp_get_wtime();
   data->time = end-start;
 }
 
 void main() {
-  for(int i = 0; i < 10; i++) {
+  for(int i = 0; i < 1; i++) {
     Data serial, parallel;
     serial.length = 0;
     serial.numThreads = 1;
@@ -101,6 +96,9 @@ void main() {
     parallel.numThreads = 1;
     sieveSerial(&serial);
     sieveThreads(&parallel, 2);
+
+    // showPrimes(&serial);
+    // showPrimes(&parallel);
     double speedup = serial.time/parallel.time;
     double efficiency = serial.time/(parallel.numThreads * parallel.time);
 
@@ -112,7 +110,7 @@ void main() {
     printf("SpeedUp: %lf\n", speedup);
     printf("Efficiency: %lf\n", efficiency);
     printf("==================================================================\n");
-    free(serial.primes);
-    free(parallel.primes);
+    free(serial.isPrime);
+    free(parallel.isPrime);
   }
 }
