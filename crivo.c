@@ -64,37 +64,63 @@ void sieveThreads(Data *data, int numThreads) {
 }
 
 // Falta só fazer o algoritmo MPI
-void sieveMPI(Data *data, int numProcess) {
+void sieveMPI(Data *data) {
   double start = omp_get_wtime();
-  int *a, length = 0;
-  a = (int*)calloc(MAX, sizeof(int));
+  MPI_Init(NULL,NULL);
+  int nprocs;
+  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int *a = NULL;
+  int i, j, test, subLength;
+  int *tamanhos = NULL;
+  int *subVet = NULL;
   int root = sqrt(MAX);
-  data->numThreads = numProcess;
 
-  #pragma omp parallel for num_threads(numProcess)
-    for(int k = 2; k < MAX; k++) {
-        a[k] = 1;
-    }
+  if(rank == 0){
+    a = (int*)malloc(MAX * sizeof(int));
+    tamanhos = malloc((nprocs) * sizeof(int));
+  }
 
-  #pragma omp parallel num_threads(numProcess)
-  {
-    #pragma omp for schedule(dynamic)
-      for(int i = 2; i <= root; i++) {
-        if(a[i]){
-          for(int j = 2 * i; j <= MAX; j += i) {
-            a[j] = 0;
-          }
-        }
-    }
-  } 
+  subLength = 0;
+  subVet = (int*)malloc(SUBPROC * sizeof(int));
+  MPI_Scatter(a, SUBPROC, MPI_INT, subVet, SUBPROC, MPI_INT, 0, MPI_COMM_WORLD);
 
-  #pragma omp parallel for num_threads(numProcess) reduction(+: length)
-    for(int i = 0; i < MAX; i++) {
-      length += a[i];
-    }
+  for(i = 2; i < SUBPROC; i++){
+    subVet[i] = 1;
+  }
+
+  // test = (MAX / (rank + 1));
+  // for(i = 2; i < root;) {
+  //   if(rank == 0) i++;
+  //   if(subVet[test % i]){
+  //     if(rank == 0) {
+  //       MPI_Bcast(&i, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  //     } else {
+  //       MPI_Bcast(&i, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  //     }
+  //     for(j = 2 * (test % i); j <= SUBPROC; j += i) {
+  //       subVet[j] = 0;
+  //     }
+  //   }
+  // }
+
+  for(i = 0; i < SUBPROC; i++){
+    subLength += subVet[i];
+  }
   
-  data->length = length;
-  data->isPrime = a;
+  MPI_Gather(&subLength, 1, MPI_INT, tamanhos, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  // MPI_Gather(&subVet, SUBPROC, MPI_INT, a, MAX, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if(rank == 0) {
+    for(i = 0; i < nprocs; i++){
+      data->length += tamanhos[i];
+    }
+    data->numThreads = nprocs;
+    data->isPrime = a;
+  }
+
+  MPI_Finalize();
   double end = omp_get_wtime();
   data->time = end-start;
 }

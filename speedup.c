@@ -10,28 +10,31 @@ void showPrimes(Data *data) {
 
 void main() {
   for(int i = 0; i < 1; i++) {
-    Data serial, parallel;
+    Data serial, parallel, mpi;
     serial.length = 0;
     serial.numThreads = 1;
     parallel.length = 0;
     parallel.numThreads = 1;
-    sieveSerial(&serial);
-    sieveThreads(&parallel, 2);
+    mpi.length = 0;
+    // sieveSerial(&serial);
+    // sieveThreads(&parallel, 2);
+    sieveMPI(&mpi);
 
     // showPrimes(&serial);
     // showPrimes(&parallel);
-    double speedup = serial.time/parallel.time;
-    double efficiency = serial.time/(parallel.numThreads * parallel.time);
+    printf("%d\n", mpi.length);
+    // double speedup = serial.time/parallel.time;
+    // double efficiency = serial.time/(parallel.numThreads * parallel.time);
 
-    printf("==================================================================\n");
-    printf("Serial Length: %d\nParallel Length: %d\n", serial.length, parallel.length);
+    // printf("==================================================================\n");
+    // printf("Serial Length: %d\nParallel Length: %d\n", serial.length, parallel.length);
 
-    printf("Serial Time: %lf\nParallel Time: %lf\n", serial.time, parallel.time);
-    printf("Thread's number:\n  Serial-%d\n  Parallel-%d\n", serial.numThreads, parallel.numThreads);
-    printf("SpeedUp: %lf\n", speedup);
-    printf("Efficiency: %lf\n", efficiency);
-    printf("==================================================================\n");
-    free(serial.isPrime);
-    free(parallel.isPrime);
+    // printf("Serial Time: %lf\nParallel Time: %lf\n", serial.time, parallel.time);
+    // printf("Thread's number:\n  Serial-%d\n  Parallel-%d\n", serial.numThreads, parallel.numThreads);
+    // printf("SpeedUp: %lf\n", speedup);
+    // printf("Efficiency: %lf\n", efficiency);
+    // printf("==================================================================\n");
+    // free(serial.isPrime);
+    // free(parallel.isPrime);
   }
 }

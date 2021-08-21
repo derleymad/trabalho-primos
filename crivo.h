@@ -5,6 +5,7 @@
 #include <math.h>
 
 #define MAX 10000000
+#define SUBPROC 5000000
 
 struct data
 {
@@ -20,4 +21,4 @@ void sieveSerial(Data *data);
 
 void sieveThreads(Data *data, int numThreads);
 
-void sieveMPI(Data *data, int numProcess);
+void sieveMPI(Data *data);
