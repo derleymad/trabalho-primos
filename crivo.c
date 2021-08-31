@@ -1,127 +1,145 @@
 #include "crivo.h"
 
-void sieveSerial(Data *data) {
+void sieveSerial(Data *data)
+{
   double start = omp_get_wtime();
   int root = sqrt(MAX);
   int *a, length = 0;
-  a = (int*)calloc(MAX, sizeof(int));
+  a = (int *)calloc(MAX, sizeof(int));
 
-  for(int i = 2; i < MAX; i++) {
+  for (int i = 2; i < MAX; i++)
+  {
     a[i] = 1;
   }
 
-  for(int i = 2; i < root; i++) {
-    if(a[i]) {
-      for(int j = 2 * i; j <= MAX; j += i) {
+  for (int i = 2; i < root; i++)
+  {
+    if (a[i])
+    {
+      for (int j = 2 * i; j <= MAX; j += i)
+      {
         a[j] = 0;
       }
     }
   }
 
-  for(int i = 1; i < MAX; i++) {
+  for (int i = 1; i < MAX; i++)
+  {
     length += a[i];
   }
 
   data->length = length;
   data->isPrime = a;
   double end = omp_get_wtime();
-  data->time = end-start;
+  data->time = end - start;
 }
 
-void sieveThreads(Data *data, int numThreads) {
+void sieveThreads(Data *data, int numThreads)
+{
   double start = omp_get_wtime();
   int *a, length = 0;
-  a = (int*)calloc(MAX, sizeof(int));
+  a = (int *)calloc(MAX, sizeof(int));
   int root = sqrt(MAX);
   data->numThreads = numThreads;
 
-  #pragma omp parallel for num_threads(numThreads)
-    for(int k = 2; k < MAX; k++) {
-        a[k] = 1;
-    }
-
-  #pragma omp parallel num_threads(numThreads)
+#pragma omp parallel for num_threads(numThreads)
+  for (int k = 2; k < MAX; k++)
   {
-    #pragma omp for schedule(dynamic)
-      for(int i = 2; i <= root; i++) {
-        if(a[i]){
-          for(int j = 2 * i; j <= MAX; j += i) {
-            a[j] = 0;
-          }
-        }
-    }
-  } 
+    a[k] = 1;
+  }
 
-  #pragma omp parallel for num_threads(numThreads) reduction(+: length)
-    for(int i = 0; i < MAX; i++) {
-      length += a[i];
+#pragma omp parallel num_threads(numThreads)
+  {
+#pragma omp for schedule(dynamic)
+    for (int i = 2; i <= root; i++)
+    {
+      if (a[i])
+      {
+        for (int j = 2 * i; j <= MAX; j += i)
+        {
+          a[j] = 0;
+        }
+      }
     }
-  
+  }
+
+#pragma omp parallel for num_threads(numThreads) reduction(+ \
+                                                           : length)
+  for (int i = 0; i < MAX; i++)
+  {
+    length += a[i];
+  }
+
   data->length = length;
   data->isPrime = a;
   double end = omp_get_wtime();
-  data->time = end-start;
+  data->time = end - start;
 }
 
 // Falta só fazer o algoritmo MPI
-void sieveMPI(Data *data) {
+void sieveMPI(Data *data)
+{
   double start = omp_get_wtime();
-  MPI_Init(NULL,NULL);
+  MPI_Init(NULL, NULL);
   int nprocs;
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   int *a = NULL;
-  int i, j, test, subLength;
-  int *tamanhos = NULL;
+  int prime = 2;
+  int i, j;
   int *subVet = NULL;
   int root = sqrt(MAX);
 
-  if(rank == 0){
-    a = (int*)malloc(MAX * sizeof(int));
-    tamanhos = malloc((nprocs) * sizeof(int));
+  if (rank == 0)
+  {
+    a = (int *)malloc(MAX * sizeof(int));
   }
 
-  subLength = 0;
-  subVet = (int*)malloc(SUBPROC * sizeof(int));
-  MPI_Scatter(a, SUBPROC, MPI_INT, subVet, SUBPROC, MPI_INT, 0, MPI_COMM_WORLD);
+  subVet = (int *)malloc(SUBPROC * sizeof(int));
+  MPI_Scatter(a, 1, MPI_INT, subVet, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  for(i = 2; i < SUBPROC; i++){
+  for (i = 0; i < SUBPROC; i++)
+  {
+    if (rank == 0 && i < 2)
+      continue;
     subVet[i] = 1;
   }
 
-  // test = (MAX / (rank + 1));
-  // for(i = 2; i < root;) {
-  //   if(rank == 0) i++;
-  //   if(subVet[test % i]){
-  //     if(rank == 0) {
-  //       MPI_Bcast(&i, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  //     } else {
-  //       MPI_Bcast(&i, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  //     }
-  //     for(j = 2 * (test % i); j <= SUBPROC; j += i) {
-  //       subVet[j] = 0;
-  //     }
-  //   }
-  // }
-
-  for(i = 0; i < SUBPROC; i++){
-    subLength += subVet[i];
-  }
-  
-  MPI_Gather(&subLength, 1, MPI_INT, tamanhos, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  // MPI_Gather(&subVet, SUBPROC, MPI_INT, a, MAX, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if(rank == 0) {
-    for(i = 0; i < nprocs; i++){
-      data->length += tamanhos[i];
+  for (i = 2; i < root; i++)
+  {
+    if (rank == 0 && subVet[i])
+    {
+      prime = i;
     }
-    data->numThreads = nprocs;
-    data->isPrime = a;
+    MPI_Bcast(&prime, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    int index = (SUBPROC * rank);
+    int begin = (index % prime == 0)? index: (prime - (index % prime)) + index;
+    begin -= index;
+    // if(rank!= 0) printf("begin: %d, prime: %d\n", begin, prime);
+    for (j = (rank == 0)? 2 * prime: begin; j <= SUBPROC; j += prime)
+    {
+        subVet[j] = 0;
+    }
   }
+
+  int subLength = 0;
+  int length;
+  for(int i = 0; i < SUBPROC; i++) {
+    if(subVet[i]){
+      subLength++;
+    }
+  }
+
+  MPI_Gather(subVet, SUBPROC, MPI_INT, a, SUBPROC, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&subLength, &length, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
   MPI_Finalize();
-  double end = omp_get_wtime();
-  data->time = end-start;
-}
 
+  data->length = length;
+  data->isPrime = a;
+  data->numThreads = nprocs;
+  double end = omp_get_wtime();
+  data->time = end - start;
+  return;
+}
