@@ -24,7 +24,7 @@ void main() {
     printf("==================================================================\n");
     printf("Serial Length: %d\nParallel Length: %d\n", serial.length, parallel.length);
 
-    printf("Serial Time: %lf\nParallel Time: %lf\n", serial.time, parallel.time);d
+    printf("Serial Time: %lf\nParallel Time: %lf\n", serial.time, parallel.time);
     printf("Thread's number:\n  Serial-%d\n  Parallel-%d\n", serial.numThreads, parallel.numThreads);
     printf("SpeedUp: %lf\n", speedup);
     printf("Efficiency: %lf\n", efficiency);
