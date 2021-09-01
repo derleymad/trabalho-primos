@@ -10,7 +10,7 @@ void showPrimes(Data *data) {
 
 void main() {
   int numRep = 10, numThreads = 2;
-  double speedup = 0.0, efficiency = 0.0;
+  double speedup = 0.0, efficiency = 0.0, stime = 0.0, ptime = 0.0;
 
   for(int i = 0; i < numRep; i++) {
     Data serial, parallel;
@@ -21,6 +21,8 @@ void main() {
     sieveSerial(&serial);
     sieveThreads(&parallel, numThreads);
 
+    stime += serial.time;
+    ptime += parallel.time;
     speedup += serial.time/parallel.time;
     efficiency += serial.time/(parallel.numThreads * parallel.time);
 
@@ -34,6 +36,8 @@ void main() {
     free(serial.isPrime);
     free(parallel.isPrime);
   }
+  printf("Serial Time: %lf\n", stime/numRep);
+  printf("Parallel Time: %lf\n", ptime/numRep);
   printf("Speedup average with %d repetitions and %d threads: %lf\n", numRep, numThreads, speedup/numRep);
   printf("Efficiency average with %d repetitions and %d threads: %lf\n", numRep, numThreads, efficiency/numRep);
   printf("==================================================================\n");

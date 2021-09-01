@@ -83,6 +83,7 @@ void sieveMPI(Data *data)
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
   int *a = NULL;
   int prime = 2;
   int i, j;
