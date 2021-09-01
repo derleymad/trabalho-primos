@@ -63,8 +63,7 @@ void sieveThreads(Data *data, int numThreads)
     }
   }
 
-#pragma omp parallel for num_threads(numThreads) reduction(+ \
-                                                           : length)
+#pragma omp parallel for num_threads(numThreads) reduction(+: length)
   for (int i = 0; i < MAX; i++)
   {
     length += a[i];
@@ -76,7 +75,6 @@ void sieveThreads(Data *data, int numThreads)
   data->time = end - start;
 }
 
-// Falta só fazer o algoritmo MPI
 void sieveMPI(Data *data)
 {
   double start = omp_get_wtime();
