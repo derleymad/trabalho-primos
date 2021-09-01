@@ -9,7 +9,7 @@ void showPrimes(Data *data) {
 }
 
 void main() {
-  int numRep = 10, numThreads = 6;
+  int numRep = 10, numThreads = 2;
   double speedup = 0.0, efficiency = 0.0;
 
   for(int i = 0; i < numRep; i++) {
